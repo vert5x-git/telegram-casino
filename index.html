@@ -531,39 +531,37 @@
                 return;
             }
             
+            // Получаем текущий баланс
+            const balanceElement = document.querySelector('.balance-amount');
+            let currentBalance = parseInt(balanceElement.textContent);
+            
+            // Проверяем, достаточно ли денег для ставки
+            if (betAmount > currentBalance) {
+                showError('Недостаточно средств для ставки!');
+                return;
+            }
+            
             // Скрываем предыдущий результат
             document.getElementById('result').style.display = 'none';
             
-            // Отладочная информация
-            showDebug(`Отправка данных: action=spin, bet_amount=${betAmount}`);
-            
             try {
-                // Генерируем результат локально
+                // Генерируем результат
                 const result = spinReels();
                 
                 // Анимируем барабаны
                 animateReels(result.symbols, betAmount, () => {
-                    // После анимации отправляем данные в бота
-                    const data = {
-                        action: 'spin',
-                        bet_amount: betAmount,
-                        symbols: result.symbols,
-                        multiplier: result.multiplier
-                    };
+                    // Вычисляем выигрыш
+                    const winAmount = Math.floor(betAmount * result.multiplier);
                     
-                    showDebug('Отправка данных в бота: ' + JSON.stringify(data));
+                    // Обновляем баланс
+                    const newBalance = currentBalance - betAmount + winAmount;
+                    updateBalance(newBalance);
                     
-                    try {
-                        // Отправляем данные в бота
-                        const jsonData = JSON.stringify(data);
-                        showDebug('Отправляемые данные (JSON): ' + jsonData);
-                        tg.sendData(jsonData);
-                        showDebug('Данные успешно отправлены в бота');
-                    } catch (e) {
-                        showError('Ошибка при отправке данных в бота: ' + e.message);
-                        showDebug('Ошибка отправки: ' + e.message);
-                        // В случае ошибки тоже включаем кнопку
-                        document.getElementById('spinButton').disabled = false;
+                    // Показываем результат
+                    if (winAmount > 0) {
+                        showResult(`Выигрыш: ${winAmount} монет (x${result.multiplier})`, true);
+                    } else {
+                        showResult('Ставка проиграна', false);
                     }
                     
                     // Очищаем поле ввода
@@ -572,7 +570,6 @@
             } catch (e) {
                 // Показываем ошибку, если что-то пошло не так
                 showError('Ошибка при обработке данных: ' + e.message);
-                showDebug('Ошибка: ' + e.message);
                 
                 // Включаем кнопку
                 document.getElementById('spinButton').disabled = false;
