@@ -620,6 +620,36 @@
                 }
             }
         });
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Запрашиваем баланс у бота
+                const data = {
+                    action: 'get_balance'
+                };
+                tg.sendData(JSON.stringify(data));
+                showDebug('Запрошен баланс у бота');
+            } catch (e) {
+                showError('Ошибка при инициализации: ' + e.message);
+            }
+        });
+
+        // Обработчик входящих сообщений от бота
+        window.addEventListener('message', function(event) {
+            try {
+                if (event.data && typeof event.data === 'string') {
+                    const data = JSON.parse(event.data);
+                    if (data.balance !== undefined) {
+                        // Обновляем баланс из данных бота
+                        updateBalance(data.balance);
+                        showDebug('Получен баланс от бота: ' + data.balance);
+                    }
+                }
+            } catch (e) {
+                showError('Ошибка при обработке сообщения от бота: ' + e.message);
+            }
+        });
     </script>
 </body>
 </html>
