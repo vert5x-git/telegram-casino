@@ -39,6 +39,8 @@
             border-radius: 10px;
             margin-bottom: 20px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
 
         .slot-display {
@@ -46,6 +48,37 @@
             margin: 20px 0;
             font-family: monospace;
             letter-spacing: 10px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slot-reel {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            margin: 0 5px;
+            overflow: hidden;
+            position: relative;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .slot-symbols {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            transition: top 0.1s linear;
+        }
+
+        .slot-symbol {
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
         }
 
         .combinations {
@@ -128,6 +161,34 @@
             white-space: pre-wrap;
             word-break: break-all;
         }
+
+        .result {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            display: none;
+        }
+
+        .win {
+            color: #34c759;
+            font-weight: bold;
+        }
+
+        .lose {
+            color: #ff3b30;
+        }
+
+        @keyframes spin {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-1000%); }
+        }
+
+        .spinning {
+            animation: spin 0.5s linear infinite;
+        }
     </style>
 </head>
 <body>
@@ -138,7 +199,74 @@
         </div>
 
         <div class="slot-machine">
-            <div class="slot-display">🎰🎰🎰</div>
+            <div class="slot-display">
+                <div class="slot-reel" id="reel1">
+                    <div class="slot-symbols" id="symbols1">
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                    </div>
+                </div>
+                <div class="slot-reel" id="reel2">
+                    <div class="slot-symbols" id="symbols2">
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                    </div>
+                </div>
+                <div class="slot-reel" id="reel3">
+                    <div class="slot-symbols" id="symbols3">
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">⛏️</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="combinations">
@@ -173,9 +301,10 @@
 
         <div class="bet-controls">
             <input type="number" class="bet-input" id="betAmount" placeholder="Введите ставку" min="1">
-            <button class="spin-button" onclick="spin()">🎰 Крутить барабаны</button>
+            <button class="spin-button" id="spinButton" onclick="spin()">🎰 Крутить барабаны</button>
         </div>
 
+        <div class="result" id="result"></div>
         <div class="error" id="error"></div>
         <div class="debug" id="debug"></div>
     </div>
@@ -199,6 +328,19 @@
         document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.secondaryBackgroundColor || '#f0f0f0');
         document.documentElement.style.setProperty('--tg-theme-hint-color', tg.hintColor || '#999999');
 
+        // Символы для слот-машины
+        const SYMBOLS = ['💎', '💰', '⛏️'];
+        
+        // Множители выигрыша
+        const MULTIPLIERS = {
+            '💎💎💎': 5,    // Три алмаза
+            '💰💰💰': 3,    // Три мешка с деньгами
+            '⛏️⛏️⛏️': 2,    // Три кирки
+            '💎💎': 2,      // Два алмаза
+            '💰💰': 1.5,    // Два мешка с деньгами
+            '⛏️⛏️': 1.2,    // Две кирки
+        };
+
         function showError(message) {
             document.getElementById('error').textContent = message;
             setTimeout(() => {
@@ -210,6 +352,92 @@
             document.getElementById('debug').textContent = message;
         }
 
+        function showResult(message, isWin) {
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = message;
+            resultElement.className = isWin ? 'result win' : 'result lose';
+            resultElement.style.display = 'block';
+        }
+
+        function calculateWin(symbols) {
+            // Преобразуем список символов в строку для проверки
+            const symbolsStr = symbols.join('');
+            
+            // Проверяем комбинации из трёх символов
+            if (MULTIPLIERS[symbolsStr]) {
+                return MULTIPLIERS[symbolsStr];
+            }
+            
+            // Проверяем комбинации из двух символов
+            for (let i = 0; i < SYMBOLS.length; i++) {
+                const symbol = SYMBOLS[i];
+                if (symbols.filter(s => s === symbol).length >= 2) {
+                    const twoSymbols = symbol + symbol;
+                    if (MULTIPLIERS[twoSymbols]) {
+                        return MULTIPLIERS[twoSymbols];
+                    }
+                }
+            }
+            
+            return 0;
+        }
+
+        function spinReels() {
+            // Генерируем случайные символы
+            const resultSymbols = [];
+            for (let i = 0; i < 3; i++) {
+                resultSymbols.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+            }
+            
+            // Вычисляем выигрыш
+            const multiplier = calculateWin(resultSymbols);
+            
+            return { symbols: resultSymbols, multiplier };
+        }
+
+        function animateReels(resultSymbols, betAmount, callback) {
+            const spinButton = document.getElementById('spinButton');
+            spinButton.disabled = true;
+            
+            // Начинаем анимацию
+            document.getElementById('symbols1').classList.add('spinning');
+            document.getElementById('symbols2').classList.add('spinning');
+            document.getElementById('symbols3').classList.add('spinning');
+            
+            // Останавливаем барабаны по очереди
+            setTimeout(() => {
+                document.getElementById('symbols1').classList.remove('spinning');
+                document.getElementById('symbols1').style.top = '0px';
+                document.getElementById('symbols1').querySelector('.slot-symbol').textContent = resultSymbols[0];
+            }, 1000);
+            
+            setTimeout(() => {
+                document.getElementById('symbols2').classList.remove('spinning');
+                document.getElementById('symbols2').style.top = '0px';
+                document.getElementById('symbols2').querySelector('.slot-symbol').textContent = resultSymbols[1];
+            }, 1500);
+            
+            setTimeout(() => {
+                document.getElementById('symbols3').classList.remove('spinning');
+                document.getElementById('symbols3').style.top = '0px';
+                document.getElementById('symbols3').querySelector('.slot-symbol').textContent = resultSymbols[2];
+                
+                // Показываем результат
+                const winAmount = Math.floor(betAmount * multiplier);
+                if (winAmount > 0) {
+                    showResult(`Выигрыш: ${winAmount} монет (x${multiplier})`, true);
+                } else {
+                    showResult('Нет выигрышной комбинации', false);
+                }
+                
+                // Включаем кнопку
+                spinButton.disabled = false;
+                
+                // Вызываем callback
+                if (callback) callback();
+            }, 2000);
+        }
+
         function spin() {
             let betAmount = parseInt(document.getElementById('betAmount').value);
             if (isNaN(betAmount) || betAmount < 1) {
@@ -217,25 +445,39 @@
                 return;
             }
 
+            // Скрываем предыдущий результат
+            document.getElementById('result').style.display = 'none';
+            
             // Отладочная информация
             showDebug(`Отправка данных: action=spin, bet=${betAmount}`);
             
             try {
-                // Отправляем данные в бота
-                tg.sendData(JSON.stringify({
-                    action: 'spin',
-                    bet: betAmount
-                }));
+                // Генерируем результат локально
+                const result = spinReels();
                 
-                // Очищаем поле ввода
-                document.getElementById('betAmount').value = '';
-                
-                // Показываем сообщение об успешной отправке
-                showDebug('Данные успешно отправлены');
+                // Анимируем барабаны
+                animateReels(result.symbols, betAmount, () => {
+                    // После анимации отправляем данные в бота
+                    tg.sendData(JSON.stringify({
+                        action: 'spin',
+                        bet: betAmount,
+                        symbols: result.symbols,
+                        multiplier: result.multiplier
+                    }));
+                    
+                    // Очищаем поле ввода
+                    document.getElementById('betAmount').value = '';
+                    
+                    // Показываем сообщение об успешной отправке
+                    showDebug('Данные успешно отправлены');
+                });
             } catch (e) {
                 // Показываем ошибку, если что-то пошло не так
                 showError('Ошибка при отправке данных: ' + e.message);
                 showDebug('Ошибка: ' + e.message);
+                
+                // Включаем кнопку
+                document.getElementById('spinButton').disabled = false;
             }
         }
 
