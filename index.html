@@ -196,6 +196,7 @@
         <div class="balance">
             <div>Ваш баланс:</div>
             <div class="balance-amount">10000 монет</div>
+            <button class="credit-button" id="creditButton" style="display: none; margin-top: 10px; background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); border: none; padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer;">Взять кредит (1000 монет)</button>
         </div>
 
         <div class="slot-machine">
@@ -384,8 +385,8 @@
             // Генерируем случайные символы с повышенными шансами на выигрыш
             const resultSymbols = [];
             
-            // Определяем, будет ли это выигрышная комбинация (23.237127% шанс)
-            const isWinningCombination = Math.random() < 0.23237127;
+            // Определяем, будет ли это выигрышная комбинация (32% шанс)
+            const isWinningCombination = Math.random() < 0.32;
             
             if (isWinningCombination) {
                 // Выбираем случайный выигрышный символ
@@ -499,6 +500,14 @@
             const oldBalance = parseInt(balanceElement.textContent);
             balanceElement.textContent = newBalance + ' монет';
             
+            // Показываем или скрываем кнопку кредита в зависимости от баланса
+            const creditButton = document.getElementById('creditButton');
+            if (newBalance <= 0) {
+                creditButton.style.display = 'block';
+            } else {
+                creditButton.style.display = 'none';
+            }
+            
             // Добавляем анимацию изменения баланса
             if (oldBalance !== newBalance) {
                 balanceElement.style.transition = 'color 0.3s';
@@ -564,7 +573,7 @@
                         };
                         tg.sendData(JSON.stringify(data));
                         showDebug('Отправлены данные боту: ' + JSON.stringify(data));
-                    } catch (e) {
+                    } catch (e) { 
                         showError('Ошибка при сохранении баланса: ' + e.message);
                         showDebug('Ошибка отправки данных боту: ' + e.message);
                     }
@@ -585,6 +594,30 @@
         document.getElementById('betAmount').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 spin();
+            }
+        });
+
+        // Обработчик нажатия на кнопку кредита
+        document.getElementById('creditButton').addEventListener('click', function() {
+            const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+            if (currentBalance <= 0) {
+                // Добавляем 1000 монет к балансу
+                const newBalance = currentBalance + 1000;
+                updateBalance(newBalance);
+                
+                // Отправляем данные боту для сохранения баланса
+                try {
+                    const data = {
+                        action: 'update_balance',
+                        balance: newBalance,
+                        credit_taken: true
+                    };
+                    tg.sendData(JSON.stringify(data));
+                    showDebug('Отправлены данные о взятии кредита: ' + JSON.stringify(data));
+                } catch (e) {
+                    showError('Ошибка при сохранении баланса: ' + e.message);
+                    showDebug('Ошибка отправки данных боту: ' + e.message);
+                }
             }
         });
     </script>
