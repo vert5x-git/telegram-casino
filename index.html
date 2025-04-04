@@ -516,7 +516,7 @@
             document.getElementById('result').style.display = 'none';
             
             // Отладочная информация
-            showDebug(`Отправка данных: action=spin, bet=${betAmount}`);
+            showDebug(`Отправка данных: action=spin, bet_amount=${betAmount}`);
             
             try {
                 // Генерируем результат локально
@@ -535,7 +535,10 @@
                     showDebug('Отправка данных в бота: ' + JSON.stringify(data));
                     
                     try {
-                        tg.sendData(JSON.stringify(data));
+                        // Отправляем данные в бота
+                        const jsonData = JSON.stringify(data);
+                        showDebug('Отправляемые данные (JSON): ' + jsonData);
+                        tg.sendData(jsonData);
                         showDebug('Данные успешно отправлены в бота');
                         
                         // Добавляем обработчик для получения ответа от бота
