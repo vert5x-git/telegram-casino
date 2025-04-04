@@ -455,7 +455,14 @@
                 // Если данные в формате JSON строки
                 if (typeof event === 'string') {
                     try {
-                        data = JSON.parse(event);
+                        // Проверяем, начинается ли строка с префикса web_app_data:
+                        if (event.startsWith('web_app_data:')) {
+                            // Удаляем префикс и парсим JSON
+                            data = JSON.parse(event.substring('web_app_data:'.length));
+                        } else {
+                            // Пытаемся распарсить как обычный JSON
+                            data = JSON.parse(event);
+                        }
                         showDebug('Распарсенные данные: ' + JSON.stringify(data));
                     } catch (e) {
                         showDebug('Ошибка парсинга JSON: ' + e.message);
