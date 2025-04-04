@@ -94,6 +94,8 @@
             padding: 8px;
             text-align: center;
             font-size: 24px;
+            position: relative;
+            cursor: pointer;
         }
 
         .inventory-item.rare {
@@ -106,6 +108,24 @@
 
         .inventory-item.legendary {
             color: #ff9500;
+        }
+
+        .inventory-item .sell-button {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 10px;
+            padding: 2px;
+            border-radius: 0 0 6px 6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .inventory-item:hover .sell-button {
+            opacity: 1;
         }
 
         .open-case-button {
@@ -194,6 +214,8 @@
             width: 100%;
             height: 100px;
             position: relative;
+            transform: translateX(0);
+            will-change: transform;
         }
 
         .case-item-animation {
@@ -206,6 +228,7 @@
             justify-content: center;
             align-items: center;
             font-size: 40px;
+            flex-shrink: 0;
         }
 
         .case-item-animation.rare {
@@ -443,11 +466,22 @@
                 return;
             }
             
-            inventory.forEach(item => {
+            inventory.forEach((item, index) => {
                 const itemElement = document.createElement('div');
                 itemElement.className = 'inventory-item ' + item.rarity;
                 itemElement.textContent = item.emoji;
                 itemElement.title = `${item.name} (${item.value} монет)`;
+                
+                // Добавляем кнопку продажи
+                const sellButton = document.createElement('div');
+                sellButton.className = 'sell-button';
+                sellButton.textContent = 'Продать';
+                sellButton.onclick = (e) => {
+                    e.stopPropagation();
+                    sellItem(index);
+                };
+                
+                itemElement.appendChild(sellButton);
                 inventoryGrid.appendChild(itemElement);
             });
             
@@ -608,6 +642,13 @@
             // Показываем анимацию
             animationContainer.style.display = 'flex';
             
+            // Сбрасываем трансформацию
+            itemsContainer.style.transition = 'none';
+            itemsContainer.style.transform = 'translateX(0)';
+            
+            // Форсируем перерисовку
+            void itemsContainer.offsetWidth;
+            
             // Анимируем прокрутку
             setTimeout(() => {
                 itemsContainer.style.transition = 'transform 5s cubic-bezier(0.1, 0.7, 0.1, 1)';
@@ -702,6 +743,45 @@
                 }
             }
         });
+
+        // Функция для продажи предмета
+        function sellItem(index) {
+            if (index < 0 || index >= inventory.length) {
+                showError('Предмет не найден!');
+                return;
+            }
+            
+            const item = inventory[index];
+            const balanceElement = document.querySelector('.balance-amount');
+            const currentBalance = parseInt(balanceElement.textContent);
+            
+            // Удаляем предмет из инвентаря
+            inventory.splice(index, 1);
+            
+            // Обновляем баланс
+            const newBalance = currentBalance + item.value;
+            updateBalance(newBalance);
+            
+            // Обновляем инвентарь
+            updateInventory(inventory);
+            
+            // Показываем результат
+            showResult(`Вы продали ${item.name} за ${item.value} монет`, true);
+            
+            // Отправляем данные боту для сохранения
+            try {
+                const data = {
+                    action: 'update_data',
+                    balance: newBalance,
+                    inventory: inventory
+                };
+                tg.sendData(JSON.stringify(data));
+                showDebug('Отправлены данные о продаже предмета: ' + JSON.stringify(data));
+            } catch (e) {
+                showError('Ошибка при сохранении данных: ' + e.message);
+                showDebug('Ошибка отправки данных боту: ' + e.message);
+            }
+        }
     </script>
 </body>
 </html> 
