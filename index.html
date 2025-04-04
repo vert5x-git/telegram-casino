@@ -564,6 +564,23 @@
                         showResult('Ставка проиграна', false);
                     }
                     
+                    // Отправляем данные боту для сохранения баланса
+                    try {
+                        const data = {
+                            action: 'update_balance',
+                            balance: newBalance,
+                            bet_amount: betAmount,
+                            win_amount: winAmount,
+                            symbols: result.symbols,
+                            multiplier: result.multiplier
+                        };
+                        tg.sendData(JSON.stringify(data));
+                        showDebug('Отправлены данные боту: ' + JSON.stringify(data));
+                    } catch (e) {
+                        showError('Ошибка при сохранении баланса: ' + e.message);
+                        showDebug('Ошибка отправки данных боту: ' + e.message);
+                    }
+                    
                     // Очищаем поле ввода
                     document.getElementById('betAmount').value = '';
                 });
