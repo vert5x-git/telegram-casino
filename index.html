@@ -381,10 +381,24 @@
         }
 
         function spinReels() {
-            // Генерируем случайные символы
+            // Генерируем случайные символы с повышенными шансами на выигрыш
             const resultSymbols = [];
-            for (let i = 0; i < 3; i++) {
-                resultSymbols.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+            
+            // Определяем, будет ли это выигрышная комбинация (40% шанс)
+            const isWinningCombination = Math.random() < 0.4;
+            
+            if (isWinningCombination) {
+                // Выбираем случайный выигрышный символ
+                const winningSymbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+                // Заполняем все три позиции этим символом
+                for (let i = 0; i < 3; i++) {
+                    resultSymbols.push(winningSymbol);
+                }
+            } else {
+                // Для невыигрышной комбинации генерируем случайные символы
+                for (let i = 0; i < 3; i++) {
+                    resultSymbols.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+                }
             }
             
             // Вычисляем выигрыш
