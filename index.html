@@ -35,7 +35,7 @@
 
         .game-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             margin-bottom: 20px;
         }
@@ -52,6 +52,12 @@
             flex-direction: column;
             align-items: center;
             gap: 8px;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .game-button.selected {
+            opacity: 1;
         }
 
         .game-button:active {
@@ -77,6 +83,7 @@
             border-radius: 8px;
             background: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
+            font-size: 16px;
         }
 
         .spin-button {
@@ -99,6 +106,14 @@
             text-align: center;
             margin-top: 20px;
             font-size: 20px;
+            color: var(--tg-theme-text-color);
+        }
+
+        .error {
+            color: #ff3b30;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -130,6 +145,7 @@
         </div>
 
         <div class="result" id="result"></div>
+        <div class="error" id="error"></div>
     </div>
 
     <script>
@@ -139,22 +155,41 @@
         tg.expand();
         tg.enableClosingConfirmation();
 
+        // Инициализация темы
+        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor || '#000000');
+        document.documentElement.style.setProperty('--tg-theme-button-color', tg.buttonColor || '#3390ec');
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.secondaryBackgroundColor || '#f0f0f0');
+        document.documentElement.style.setProperty('--tg-theme-hint-color', tg.hintColor || '#999999');
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            setTimeout(() => {
+                document.getElementById('error').textContent = '';
+            }, 3000);
+        }
+
         function selectSymbol(symbol) {
             selectedSymbol = symbol;
             document.querySelectorAll('.game-button').forEach(btn => {
-                btn.style.opacity = btn.textContent.includes(symbol) ? '1' : '0.6';
+                if (btn.querySelector('.game-icon').textContent === symbol) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
             });
         }
 
         function spin() {
             if (!selectedSymbol) {
-                document.getElementById('result').textContent = 'Выберите символ!';
+                showError('Выберите символ!');
                 return;
             }
 
             let betAmount = parseInt(document.getElementById('betAmount').value);
             if (isNaN(betAmount) || betAmount < 1) {
-                document.getElementById('result').textContent = 'Введите корректную ставку!';
+                showError('Введите корректную ставку!');
                 return;
             }
 
@@ -164,15 +199,17 @@
                 symbol: selectedSymbol,
                 bet: betAmount
             }));
+
+            // Очищаем поле ввода
+            document.getElementById('betAmount').value = '';
         }
 
-        // Инициализация темы
-        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor || '#ffffff');
-        document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor || '#000000');
-        document.documentElement.style.setProperty('--tg-theme-button-color', tg.buttonColor || '#3390ec');
-        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor || '#ffffff');
-        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.secondaryBackgroundColor || '#f0f0f0');
-        document.documentElement.style.setProperty('--tg-theme-hint-color', tg.hintColor || '#999999');
+        // Обработка нажатия Enter в поле ввода ставки
+        document.getElementById('betAmount').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                spin();
+            }
+        });
     </script>
 </body>
 </html> 
