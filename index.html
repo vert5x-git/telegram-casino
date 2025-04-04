@@ -33,39 +33,47 @@
             color: var(--tg-theme-button-color);
         }
 
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+        .slot-machine {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 20px;
+            border-radius: 10px;
             margin-bottom: 20px;
+            text-align: center;
         }
 
-        .game-button {
-            background: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
-            border: none;
+        .slot-display {
+            font-size: 48px;
+            margin: 20px 0;
+            font-family: monospace;
+            letter-spacing: 10px;
+        }
+
+        .combinations {
+            background: var(--tg-theme-secondary-bg-color);
             padding: 16px;
             border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .combinations h3 {
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        .combination-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 8px;
-            opacity: 0.6;
-            transition: opacity 0.3s;
         }
 
-        .game-button.selected {
-            opacity: 1;
-        }
-
-        .game-button:active {
-            opacity: 0.8;
-        }
-
-        .game-icon {
-            font-size: 24px;
+        .combination-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
         }
 
         .bet-controls {
@@ -84,6 +92,7 @@
             background: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
             font-size: 16px;
+            text-align: center;
         }
 
         .spin-button {
@@ -102,13 +111,6 @@
             cursor: not-allowed;
         }
 
-        .result {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 20px;
-            color: var(--tg-theme-text-color);
-        }
-
         .error {
             color: #ff3b30;
             text-align: center;
@@ -124,33 +126,50 @@
             <div class="balance-amount">10000 монет</div>
         </div>
 
-        <div class="game-grid">
-            <button class="game-button" onclick="selectSymbol('💎')">
-                <span class="game-icon">💎</span>
-                <span>x5</span>
-            </button>
-            <button class="game-button" onclick="selectSymbol('💰')">
-                <span class="game-icon">💰</span>
-                <span>x3</span>
-            </button>
-            <button class="game-button" onclick="selectSymbol('⛏️')">
-                <span class="game-icon">⛏️</span>
-                <span>x2</span>
-            </button>
+        <div class="slot-machine">
+            <div class="slot-display">🎰🎰🎰</div>
+        </div>
+
+        <div class="combinations">
+            <h3>Выигрышные комбинации</h3>
+            <div class="combination-grid">
+                <div class="combination-item">
+                    <span>💎💎💎</span>
+                    <span>x5</span>
+                </div>
+                <div class="combination-item">
+                    <span>💰💰💰</span>
+                    <span>x3</span>
+                </div>
+                <div class="combination-item">
+                    <span>⛏️⛏️⛏️</span>
+                    <span>x2</span>
+                </div>
+                <div class="combination-item">
+                    <span>💎💎</span>
+                    <span>x2</span>
+                </div>
+                <div class="combination-item">
+                    <span>💰💰</span>
+                    <span>x1.5</span>
+                </div>
+                <div class="combination-item">
+                    <span>⛏️⛏️</span>
+                    <span>x1.2</span>
+                </div>
+            </div>
         </div>
 
         <div class="bet-controls">
             <input type="number" class="bet-input" id="betAmount" placeholder="Введите ставку" min="1">
-            <button class="spin-button" onclick="spin()">Крутить</button>
+            <button class="spin-button" onclick="spin()">🎰 Крутить барабаны</button>
         </div>
 
-        <div class="result" id="result"></div>
         <div class="error" id="error"></div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
-        let selectedSymbol = null;
 
         tg.expand();
         tg.enableClosingConfirmation();
@@ -170,23 +189,7 @@
             }, 3000);
         }
 
-        function selectSymbol(symbol) {
-            selectedSymbol = symbol;
-            document.querySelectorAll('.game-button').forEach(btn => {
-                if (btn.querySelector('.game-icon').textContent === symbol) {
-                    btn.classList.add('selected');
-                } else {
-                    btn.classList.remove('selected');
-                }
-            });
-        }
-
         function spin() {
-            if (!selectedSymbol) {
-                showError('Выберите символ!');
-                return;
-            }
-
             let betAmount = parseInt(document.getElementById('betAmount').value);
             if (isNaN(betAmount) || betAmount < 1) {
                 showError('Введите корректную ставку!');
@@ -196,7 +199,6 @@
             // Отправляем данные в бота
             tg.sendData(JSON.stringify({
                 action: 'spin',
-                symbol: selectedSymbol,
                 bet: betAmount
             }));
 
