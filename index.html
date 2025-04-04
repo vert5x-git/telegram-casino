@@ -378,6 +378,9 @@
             resultElement.textContent = message;
             resultElement.className = isWin ? 'result win' : 'result lose';
             resultElement.style.display = 'block';
+            
+            // Добавляем отладочную информацию
+            showDebug('Показан результат: ' + message + ' (isWin: ' + isWin + ')');
         }
 
         function calculateWin(symbols) {
@@ -419,6 +422,9 @@
         function animateReels(resultSymbols, betAmount, callback) {
             const spinButton = document.getElementById('spinButton');
             spinButton.disabled = true;
+            
+            // Скрываем предыдущий результат
+            document.getElementById('result').style.display = 'none';
             
             // Начинаем анимацию
             document.getElementById('symbols1').classList.add('spinning');
