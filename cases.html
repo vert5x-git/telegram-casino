@@ -201,21 +201,18 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            display: none;
         }
 
         .case-items-container {
             display: flex;
-            overflow-x: hidden;
-            width: 100%;
+            width: 330px; /* Фиксированная ширина для трех предметов */
             height: 100px;
             position: relative;
-            transform: translateX(0);
-            will-change: transform;
+            overflow: hidden;
         }
 
         .case-item-animation {
@@ -241,6 +238,26 @@
 
         .case-item-animation.legendary {
             color: #ff9500;
+        }
+
+        .case-items-wrapper {
+            display: flex;
+            position: absolute;
+            left: 0;
+            transition: transform 0s linear;
+        }
+
+        .case-selector {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 110px;
+            transform: translateX(-50%);
+            border: 2px solid var(--tg-theme-button-color);
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 1;
         }
 
         .case-opening-result {
@@ -615,14 +632,23 @@
         function showCaseOpeningAnimation(item, callback) {
             const animationContainer = document.getElementById('caseOpeningAnimation');
             const itemsContainer = document.getElementById('caseItemsContainer');
-            const resultElement = document.getElementById('caseOpeningResult');
             
             // Очищаем контейнер
             itemsContainer.innerHTML = '';
             
-            // Генерируем случайные предметы для анимации
+            // Создаем обертку для предметов
+            const itemsWrapper = document.createElement('div');
+            itemsWrapper.className = 'case-items-wrapper';
+            itemsContainer.appendChild(itemsWrapper);
+            
+            // Создаем селектор выигрыша
+            const selector = document.createElement('div');
+            selector.className = 'case-selector';
+            itemsContainer.appendChild(selector);
+            
+            // Генерируем случайные предметы для анимации (больше предметов для длинной анимации)
             const animationItems = [];
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 100; i++) {
                 const randomCase = Object.keys(ITEMS)[Math.floor(Math.random() * Object.keys(ITEMS).length)];
                 const randomItem = ITEMS[randomCase][Math.floor(Math.random() * ITEMS[randomCase].length)];
                 animationItems.push(randomItem);
@@ -636,40 +662,45 @@
                 const itemElement = document.createElement('div');
                 itemElement.className = 'case-item-animation ' + item.rarity;
                 itemElement.textContent = item.emoji;
-                itemsContainer.appendChild(itemElement);
+                itemsWrapper.appendChild(itemElement);
             });
             
             // Показываем анимацию
             animationContainer.style.display = 'flex';
             
-            // Сбрасываем трансформацию
-            itemsContainer.style.transition = 'none';
-            itemsContainer.style.transform = 'translateX(0)';
+            // Начальное положение (немного правее)
+            itemsWrapper.style.transform = 'translateX(100px)';
             
             // Форсируем перерисовку
-            void itemsContainer.offsetWidth;
+            void itemsWrapper.offsetWidth;
             
-            // Анимируем прокрутку
+            // Запускаем анимацию
             setTimeout(() => {
-                itemsContainer.style.transition = 'transform 5s cubic-bezier(0.1, 0.7, 0.1, 1)';
-                itemsContainer.style.transform = 'translateX(-' + (itemsContainer.scrollWidth - 100) + 'px)';
+                // Первая быстрая фаза
+                itemsWrapper.style.transition = 'transform 3s cubic-bezier(0.1, 0, 0.9, 1)';
+                itemsWrapper.style.transform = 'translateX(-5000px)';
                 
-                // Показываем результат после анимации
+                // Через 3 секунды запускаем фазу замедления
                 setTimeout(() => {
-                    resultElement.textContent = item.emoji;
-                    resultElement.className = 'case-opening-result ' + item.rarity;
-                    resultElement.style.display = 'block';
+                    // Вычисляем конечную позицию так, чтобы выигранный предмет оказался по центру
+                    const finalPosition = -(animationItems.length - 3) * 110;
+                    itemsWrapper.style.transition = 'transform 4s cubic-bezier(0.3, 0.2, 0, 1)';
+                    itemsWrapper.style.transform = `translateX(${finalPosition}px)`;
                     
-                    // Скрываем анимацию через некоторое время
+                    // После завершения анимации
                     setTimeout(() => {
-                        animationContainer.style.display = 'none';
-                        itemsContainer.style.transform = 'translateX(0)';
-                        resultElement.style.display = 'none';
+                        // Добавляем эффект подсветки выигрыша
+                        const winningItem = itemsWrapper.children[animationItems.length - 1];
+                        winningItem.style.transform = 'scale(1.1)';
+                        winningItem.style.boxShadow = '0 0 20px var(--tg-theme-button-color)';
                         
-                        // Вызываем callback
-                        if (callback) callback();
-                    }, 2000);
-                }, 5000);
+                        // Через 2 секунды скрываем анимацию
+                        setTimeout(() => {
+                            animationContainer.style.display = 'none';
+                            if (callback) callback();
+                        }, 2000);
+                    }, 4000);
+                }, 3000);
             }, 100);
         }
 
@@ -773,7 +804,8 @@
                 const data = {
                     action: 'update_data',
                     balance: newBalance,
-                    inventory: inventory
+                    inventory: inventory,
+                    item_sold: item
                 };
                 tg.sendData(JSON.stringify(data));
                 showDebug('Отправлены данные о продаже предмета: ' + JSON.stringify(data));
