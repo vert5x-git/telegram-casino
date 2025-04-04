@@ -449,14 +449,6 @@
                 document.getElementById('symbols3').style.top = '0px';
                 document.getElementById('symbols3').querySelector('.slot-symbol').textContent = resultSymbols[2];
                 
-                // Показываем результат
-                const winAmount = Math.floor(betAmount * multiplier);
-                if (winAmount > 0) {
-                    showResult(`Выигрыш: ${winAmount} монет (x${multiplier})`, true);
-                } else {
-                    showResult('Нет выигрышной комбинации', false);
-                }
-                
                 // Включаем кнопку
                 spinButton.disabled = false;
                 
@@ -465,44 +457,71 @@
             }, 2000);
         }
 
-        // Функция для обновления баланса
-        function updateBalance(newBalance) {
-            document.querySelector('.balance-amount').textContent = newBalance + ' монет';
-            showDebug('Баланс обновлен: ' + newBalance);
-        }
-
         // Функция для обработки ответа от бота
-        function handleBotResponse(data) {
+        function handleBotResponse(event) {
             try {
-                showDebug('Получен ответ от бота: ' + JSON.stringify(data));
+                showDebug('Получен ответ от бота: ' + event);
                 
-                // Если данные в формате JSON
-                if (typeof data === 'string') {
+                let data;
+                // Если данные в формате JSON строки
+                if (typeof event === 'string') {
                     try {
-                        data = JSON.parse(data);
+                        data = JSON.parse(event);
+                        showDebug('Распарсенные данные: ' + JSON.stringify(data));
                     } catch (e) {
                         showDebug('Ошибка парсинга JSON: ' + e.message);
                         return;
                     }
+                } else {
+                    // Если данные уже в формате объекта
+                    data = event;
                 }
                 
                 // Обновляем баланс, если он был передан
-                if (data && data.balance) {
+                if (data && typeof data.balance !== 'undefined') {
+                    showDebug('Обновление баланса: ' + data.balance);
                     updateBalance(data.balance);
                 }
                 
-                // Показываем выигрыш, если он был передан
-                if (data && data.win_amount) {
+                // Показываем результат спина
+                if (data && typeof data.win_amount !== 'undefined') {
                     if (data.win_amount > 0) {
                         showResult(`Выигрыш: ${data.win_amount} монет (x${data.multiplier})`, true);
+                        showDebug(`Выигрыш: ${data.win_amount} монет, множитель: ${data.multiplier}`);
                     } else {
                         showResult('Нет выигрышной комбинации', false);
+                        showDebug('Нет выигрыша');
                     }
                 }
+                
+                // Включаем кнопку, если она была отключена
+                document.getElementById('spinButton').disabled = false;
+                
             } catch (e) {
                 showError('Ошибка при обработке ответа от бота: ' + e.message);
-                showDebug('Ошибка: ' + e.message);
+                showDebug('Ошибка обработки: ' + e.message);
+                // Включаем кнопку в случае ошибки
+                document.getElementById('spinButton').disabled = false;
             }
+        }
+
+        // Функция для обновления баланса
+        function updateBalance(newBalance) {
+            const balanceElement = document.querySelector('.balance-amount');
+            const oldBalance = parseInt(balanceElement.textContent);
+            balanceElement.textContent = newBalance + ' монет';
+            
+            // Добавляем анимацию изменения баланса
+            if (oldBalance !== newBalance) {
+                balanceElement.style.transition = 'color 0.3s';
+                balanceElement.style.color = newBalance > oldBalance ? '#34c759' : '#ff3b30';
+                setTimeout(() => {
+                    balanceElement.style.transition = 'color 0.3s';
+                    balanceElement.style.color = '';
+                }, 500);
+            }
+            
+            showDebug('Баланс обновлен: ' + newBalance);
         }
 
         function spin() {
@@ -540,12 +559,11 @@
                         showDebug('Отправляемые данные (JSON): ' + jsonData);
                         tg.sendData(jsonData);
                         showDebug('Данные успешно отправлены в бота');
-                        
-                        // Добавляем обработчик для получения ответа от бота
-                        tg.onEvent('web_app_data_send', handleBotResponse);
                     } catch (e) {
                         showError('Ошибка при отправке данных в бота: ' + e.message);
                         showDebug('Ошибка отправки: ' + e.message);
+                        // В случае ошибки тоже включаем кнопку
+                        document.getElementById('spinButton').disabled = false;
                     }
                     
                     // Очищаем поле ввода
