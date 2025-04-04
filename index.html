@@ -313,20 +313,29 @@
         // Инициализация Telegram WebApp
         let tg = window.Telegram.WebApp;
         
-        // Включаем отладку
-        tg.enableClosingConfirmation();
-        tg.expand();
-        
-        // Выводим информацию об инициализации
-        document.getElementById('debug').textContent = 'Telegram WebApp инициализирован';
-        
-        // Инициализация темы
-        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor || '#ffffff');
-        document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor || '#000000');
-        document.documentElement.style.setProperty('--tg-theme-button-color', tg.buttonColor || '#3390ec');
-        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor || '#ffffff');
-        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.secondaryBackgroundColor || '#f0f0f0');
-        document.documentElement.style.setProperty('--tg-theme-hint-color', tg.hintColor || '#999999');
+        // Проверяем, что WebApp успешно инициализирован
+        if (!tg) {
+            showError('Ошибка инициализации Telegram WebApp');
+            console.error('Telegram WebApp не инициализирован');
+        } else {
+            // Включаем отладку
+            tg.enableClosingConfirmation();
+            tg.expand();
+            
+            // Выводим информацию об инициализации
+            showDebug('Telegram WebApp инициализирован успешно');
+            showDebug('Версия: ' + tg.version);
+            showDebug('Платформа: ' + tg.platform);
+            showDebug('Цветовая схема: ' + tg.colorScheme);
+            
+            // Инициализация темы
+            document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor || '#ffffff');
+            document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor || '#000000');
+            document.documentElement.style.setProperty('--tg-theme-button-color', tg.buttonColor || '#3390ec');
+            document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor || '#ffffff');
+            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.secondaryBackgroundColor || '#f0f0f0');
+            document.documentElement.style.setProperty('--tg-theme-hint-color', tg.hintColor || '#999999');
+        }
 
         // Символы для слот-машины
         const SYMBOLS = ['💎', '💰', '⛏️'];
@@ -458,22 +467,29 @@
                 // Анимируем барабаны
                 animateReels(result.symbols, betAmount, () => {
                     // После анимации отправляем данные в бота
-                    tg.sendData(JSON.stringify({
+                    const data = {
                         action: 'spin',
                         bet: betAmount,
                         symbols: result.symbols,
                         multiplier: result.multiplier
-                    }));
+                    };
+                    
+                    showDebug('Отправка данных в бота: ' + JSON.stringify(data));
+                    
+                    try {
+                        tg.sendData(JSON.stringify(data));
+                        showDebug('Данные успешно отправлены в бота');
+                    } catch (e) {
+                        showError('Ошибка при отправке данных в бота: ' + e.message);
+                        showDebug('Ошибка отправки: ' + e.message);
+                    }
                     
                     // Очищаем поле ввода
                     document.getElementById('betAmount').value = '';
-                    
-                    // Показываем сообщение об успешной отправке
-                    showDebug('Данные успешно отправлены');
                 });
             } catch (e) {
                 // Показываем ошибку, если что-то пошло не так
-                showError('Ошибка при отправке данных: ' + e.message);
+                showError('Ошибка при обработке данных: ' + e.message);
                 showDebug('Ошибка: ' + e.message);
                 
                 // Включаем кнопку
