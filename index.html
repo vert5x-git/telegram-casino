@@ -284,18 +284,6 @@
                     <span>⛏️⛏️⛏️</span>
                     <span>x2</span>
                 </div>
-                <div class="combination-item">
-                    <span>💎💎</span>
-                    <span>x2</span>
-                </div>
-                <div class="combination-item">
-                    <span>💰💰</span>
-                    <span>x1.5</span>
-                </div>
-                <div class="combination-item">
-                    <span>⛏️⛏️</span>
-                    <span>x1.2</span>
-                </div>
             </div>
         </div>
 
@@ -357,9 +345,6 @@
             '💎💎💎': 5,    // Три алмаза
             '💰💰💰': 3,    // Три мешка с деньгами
             '⛏️⛏️⛏️': 2,    // Три кирки
-            '💎💎': 2,      // Два алмаза
-            '💰💰': 1.5,    // Два мешка с деньгами
-            '⛏️⛏️': 1.2,    // Две кирки
         };
 
         function showError(message) {
@@ -387,20 +372,9 @@
             // Преобразуем список символов в строку для проверки
             const symbolsStr = symbols.join('');
             
-            // Проверяем комбинации из трёх символов
+            // Проверяем только комбинации из трёх символов
             if (MULTIPLIERS[symbolsStr]) {
                 return MULTIPLIERS[symbolsStr];
-            }
-            
-            // Проверяем комбинации из двух символов
-            for (let i = 0; i < SYMBOLS.length; i++) {
-                const symbol = SYMBOLS[i];
-                if (symbols.filter(s => s === symbol).length >= 2) {
-                    const twoSymbols = symbol + symbol;
-                    if (MULTIPLIERS[twoSymbols]) {
-                        return MULTIPLIERS[twoSymbols];
-                    }
-                }
             }
             
             return 0;
