@@ -862,6 +862,43 @@
                 showDebug('Ошибка отправки данных боту: ' + e.message);
             }
         }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Запрашиваем данные у бота
+                const data = {
+                    action: 'get_data',
+                    inventory: inventory
+                };
+                tg.sendData(JSON.stringify(data));
+                showDebug('Запрошены данные у бота');
+            } catch (e) {
+                showError('Ошибка при инициализации: ' + e.message);
+            }
+        });
+
+        // Обработчик входящих сообщений от бота
+        window.addEventListener('message', function(event) {
+            try {
+                if (event.data && typeof event.data === 'string') {
+                    const data = JSON.parse(event.data);
+                    if (data.balance !== undefined) {
+                        // Обновляем баланс из данных бота
+                        updateBalance(data.balance);
+                        showDebug('Получен баланс от бота: ' + data.balance);
+                    }
+                    if (data.inventory) {
+                        // Обновляем инвентарь из данных бота
+                        inventory = data.inventory;
+                        updateInventory(inventory);
+                        showDebug('Получен инвентарь от бота');
+                    }
+                }
+            } catch (e) {
+                showError('Ошибка при обработке сообщения от бота: ' + e.message);
+            }
+        });
     </script>
 </body>
 </html> 
