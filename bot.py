@@ -121,20 +121,23 @@ def get_main_keyboard():
     return keyboard
 
 @bot.message_handler(commands=['start'])
-def start(message):
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton('🎰 Играть в казино', web_app=WebAppInfo(url=WEBAPP_URL)))
-    keyboard.add(InlineKeyboardButton('📦 Открыть кейсы', web_app=WebAppInfo(url=CASES_WEBAPP_URL)))
-    
-    welcome_text = (
-        "🎮 Добро пожаловать в игровой центр!\n\n"
-        "Выберите игру:\n"
-        "🎰 Казино - играйте в слот-машину\n"
-        "📦 Кейсы - открывайте кейсы с наградами\n\n"
-        f"Ваш текущий баланс: {get_user_balance(message.from_user.id)} монет"
+def start_command(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    cases_button = types.KeyboardButton(
+        text="🎲 Открыть кейсы",
+        web_app=types.WebAppInfo(url=f"{WEBAPP_URL}/cases.html")
     )
+    upgrade_button = types.KeyboardButton(
+        text="⬆️ Апгрейд",
+        web_app=types.WebAppInfo(url=f"{WEBAPP_URL}/upgrade.html")
+    )
+    markup.add(cases_button, upgrade_button)
     
-    bot.reply_to(message, welcome_text, reply_markup=keyboard)
+    bot.reply_to(
+        message,
+        "👋 Привет! Выбери действие:",
+        reply_markup=markup
+    )
 
 @bot.message_handler(commands=['reset_balance'])
 def reset_balance(message):
