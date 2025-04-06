@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Апгрейд предметов</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            color: var(--tg-theme-text-color);
+            background: var(--tg-theme-bg-color);
+        }
+
+        .container {
+            max-width: 390px;
+            margin: 0 auto;
+        }
+
+        .balance {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .balance-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--tg-theme-button-color);
+        }
+
+        .upgrade-container {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .selected-items {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+            min-height: 60px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .selected-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .selected-item .remove {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 16px;
+            height: 16px;
+            background: #ff3b30;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .chance-indicator {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .chance-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--tg-theme-button-color) 0% var(--chance),
+                rgba(0, 0, 0, 0.2) var(--chance) 100%
+            );
+            position: relative;
+        }
+
+        .arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 80px;
+            height: 4px;
+            background: white;
+            transform-origin: left center;
+            transform: translateY(-50%);
+            transition: transform 3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: -8px;
+            border-left: 16px solid white;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+        }
+
+        .chance-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: var(--tg-theme-button-color);
+            text-align: center;
+            background: var(--tg-theme-bg-color);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .inventory {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .inventory h3 {
+            margin: 0 0 12px 0;
+            text-align: center;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .inventory-item {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            font-size: 24px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .inventory-item.selected {
+            border: 2px solid var(--tg-theme-button-color);
+        }
+
+        .inventory-item.rare {
+            color: #ff3b30;
+        }
+
+        .inventory-item.epic {
+            color: #5856d6;
+        }
+
+        .inventory-item.legendary {
+            color: #ff9500;
+        }
+
+        .upgrade-button {
+            width: 100%;
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .upgrade-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            display: none;
+        }
+
+        .win {
+            color: #34c759;
+        }
+
+        .lose {
+            color: #ff3b30;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="balance">
+            <div class="balance-amount" id="balance">Загрузка...</div>
+        </div>
+
+        <div class="upgrade-container">
+            <h3>Выберите предметы для апгрейда (до 5)</h3>
+            <div class="selected-items" id="selectedItems"></div>
+            
+            <div class="chance-indicator">
+                <div class="chance-circle">
+                    <div class="arrow" id="arrow"></div>
+                    <div class="chance-text">
+                        <span id="upgradeChance">0</span>%
+                        <div style="font-size: 14px" id="chanceText">выберите предметы</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="inventory">
+            <h3>Ваш инвентарь</h3>
+            <div class="inventory-grid" id="inventory"></div>
+        </div>
+
+        <button class="upgrade-button" id="upgradeButton" disabled onclick="performUpgrade()">АПГРЕЙД</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        let selectedItems = [];
+        let isSpinning = false;
+        let userItems = [];
+
+        tg.expand();
+        tg.enableClosingConfirmation();
+
+        // Загрузка баланса
+        function updateBalance(balance) {
+            document.getElementById('balance').textContent = balance + ' монет';
+        }
+
+        // Загрузка инвентаря
+        function loadInventory() {
+            // Получаем инвентарь из localStorage (как в cases.html)
+            const inventory = localStorage.getItem('inventory');
+            if (inventory) {
+                userItems = JSON.parse(inventory);
+                renderInventory();
+            }
+        }
+
+        function renderInventory() {
+            const container = document.getElementById('inventory');
+            container.innerHTML = userItems.map(item => `
+                <div class="inventory-item ${item.rarity}" onclick="selectItem(${item.id})">
+                    ${item.emoji}
+                </div>
+            `).join('');
+        }
+
+        function updateSelectedItems() {
+            const container = document.getElementById('selectedItems');
+            container.innerHTML = selectedItems.map(item => `
+                <div class="selected-item ${item.rarity}">
+                    ${item.emoji}
+                    <div class="remove" onclick="removeSelectedItem(${item.id})">×</div>
+                </div>
+            `).join('');
+            
+            calculateUpgradeChance();
+            updateUpgradeButton();
+        }
+
+        function selectItem(itemId) {
+            const item = userItems.find(i => i.id === itemId);
+            if (item && selectedItems.length < 5 && !selectedItems.find(i => i.id === itemId)) {
+                selectedItems.push(item);
+                updateSelectedItems();
+            }
+        }
+
+        function removeSelectedItem(itemId) {
+            selectedItems = selectedItems.filter(item => item.id !== itemId);
+            updateSelectedItems();
+        }
+
+        function calculateUpgradeChance() {
+            if (selectedItems.length === 0) {
+                document.getElementById('upgradeChance').textContent = '0';
+                document.getElementById('chanceText').textContent = 'выберите предметы';
+                document.querySelector('.chance-circle').style.setProperty('--chance', '0%');
+                return 0;
+            }
+
+            // Расчет шанса на основе количества и редкости предметов
+            let totalValue = selectedItems.reduce((sum, item) => {
+                switch (item.rarity) {
+                    case 'legendary': return sum + 100;
+                    case 'epic': return sum + 50;
+                    case 'rare': return sum + 25;
+                    default: return sum + 10;
+                }
+            }, 0);
+
+            const chance = Math.min(95, totalValue);
+            
+            document.getElementById('upgradeChance').textContent = chance.toFixed(1);
+            document.getElementById('chanceText').textContent = getChanceText(chance);
+            document.querySelector('.chance-circle').style.setProperty('--chance', `${chance}%`);
+            
+            return chance;
+        }
+
+        function getChanceText(chance) {
+            if (chance < 25) return 'низкий шанс';
+            if (chance < 50) return 'средний шанс';
+            if (chance < 75) return 'хороший шанс';
+            return 'отличный шанс';
+        }
+
+        function updateUpgradeButton() {
+            const button = document.getElementById('upgradeButton');
+            button.disabled = selectedItems.length === 0 || isSpinning;
+        }
+
+        function spinArrow(finalAngle) {
+            const arrow = document.getElementById('arrow');
+            isSpinning = true;
+            updateUpgradeButton();
+            
+            const totalRotation = 360 * 5 + finalAngle;
+            arrow.style.transform = `rotate(${totalRotation}deg)`;
+            
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    isSpinning = false;
+                    updateUpgradeButton();
+                    resolve();
+                }, 3000);
+            });
+        }
+
+        async function performUpgrade() {
+            if (isSpinning) return;
+
+            const chance = calculateUpgradeChance();
+            if (!chance) return;
+
+            const randomAngle = Math.random() * 360;
+            await spinArrow(randomAngle);
+
+            const success = Math.random() * 100 <= chance;
+            const result = document.getElementById('result');
+            
+            if (success) {
+                // Определяем редкость получаемого предмета
+                let newRarity;
+                const maxRarity = Math.max(...selectedItems.map(item => 
+                    item.rarity === 'legendary' ? 3 : 
+                    item.rarity === 'epic' ? 2 : 
+                    item.rarity === 'rare' ? 1 : 0
+                ));
+                
+                if (maxRarity >= 2) newRarity = 'legendary';
+                else if (maxRarity >= 1) newRarity = 'epic';
+                else newRarity = 'rare';
+
+                // Создаем новый предмет
+                const newItem = {
+                    id: Date.now(),
+                    emoji: '🎁',
+                    rarity: newRarity
+                };
+
+                // Удаляем выбранные предметы из инвентаря
+                userItems = userItems.filter(item => !selectedItems.find(s => s.id === item.id));
+                // Добавляем новый предмет
+                userItems.push(newItem);
+                
+                // Сохраняем обновленный инвентарь
+                localStorage.setItem('inventory', JSON.stringify(userItems));
+                
+                result.innerHTML = `<div class="win">Поздравляем! Вы получили новый предмет ${newItem.emoji}</div>`;
+            } else {
+                // Удаляем выбранные предметы из инвентаря
+                userItems = userItems.filter(item => !selectedItems.find(s => s.id === item.id));
+                localStorage.setItem('inventory', JSON.stringify(userItems));
+                
+                result.innerHTML = `<div class="lose">К сожалению, апгрейд не удался. Предметы потеряны.</div>`;
+            }
+
+            result.style.display = 'block';
+            selectedItems = [];
+            updateSelectedItems();
+            renderInventory();
+        }
+
+        // Инициализация
+        window.onload = function() {
+            loadInventory();
+            // Получаем баланс из параметров Telegram WebApp
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                updateBalance(10000); // Здесь должен быть реальный баланс пользователя
+            }
+        };
+    </script>
+</body>
+</html> 
