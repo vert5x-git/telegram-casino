@@ -291,7 +291,7 @@
     <div class="container">
         <div class="balance">
             <div>Ваш баланс:</div>
-            <div class="balance-amount">Загрузка...</div>
+            <div class="balance-amount">10000 монет</div>
             <button class="credit-button" id="creditButton">Взять кредит (1000 монет)</button>
         </div>
 
@@ -873,7 +873,10 @@
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Запрашиваем данные у бота
+                // Устанавливаем начальный баланс 10000 монет
+                updateBalance(10000);
+                
+                // Запрашиваем данные у бота (для синхронизации)
                 const data = {
                     action: 'get_data',
                     inventory: inventory
